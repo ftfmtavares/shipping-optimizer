@@ -1,0 +1,12 @@
+version: "3.9"
+
+services:
+  app:
+    image: shipping-optimizer:latest
+    build:
+      context: ../..
+      dockerfile: misc/docker/dockerfile
+    container_name: shipping-optimizer
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
