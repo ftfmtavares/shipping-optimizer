@@ -4,64 +4,62 @@ An exercise implementation of shipping packages optimizer based on different pac
 
 
 ## Makefile Commands
-make run:          # Run Locally
-make test:         # Unit Tests
-make build:        # Production Build
-make vet:          # Code Quality Checks
-make docker-build: # Generate Docker Image (requires Docker)
-make docker-up:    # Run locally in a Docker Container (requires Docker)
-make docker-down:  # End Docker Container Execution (requires Docker)
+make run:          # Run Locally<br>
+make test:         # Unit Tests<br>
+make build:        # Production Build<br>
+make vet:          # Code Quality Checks<br>
+make docker-build: # Generate Docker Image (requires Docker)<br>
+make docker-up:    # Run locally in a Docker Container (requires Docker)<br>
+make docker-down:  # End Docker Container Execution (requires Docker)<br>
 
 
 
 ## API Endpoints Examples
-Retrieve the package sizes of a given product
-GET 'http://localhost:8080/product/1/packsizes'
-Response:
-{
-    "pid": 1,
-    "packs": [
-        23,
-        31,
-        53
-    ]
-}
+Retrieve the package sizes of a given product<br>
+GET 'http://localhost:8080/product/1/packsizes'<br>
+Response:<br>
+{<br>
+    "pid": 1,<br>
+    "packs": [ 23, 31, 53 ]<br>
+}<br>
 
-Setup the package sizes of a given product
-POST 'http://localhost:8080/product/1/packsizes'
-Payload:
-{
-    "packs": [23, 31, 53]
-}
-Response:
-{
-    "pid": 1,
-    "packs": [ 23, 31, 53 ]
-}
 
-Setup the package sizes of a given product
-GET 'http://localhost:8080/product/1/shipping-calculation?order=500000'
-Response:
-{
-    "order": 500000,
-    "packs": [
-        {
-            "packsize": 23,
-            "quantity": 2
-        },
-        {
-            "packsize": 31,
-            "quantity": 7
-        },
-        {
-            "packsize": 53,
-            "quantity": 9429
-        }
-    ],
-    "packscount": 9438,
-    "total": 500000,
-    "excess": 0
-}
+Setup the package sizes of a given product<br>
+POST 'http://localhost:8080/product/1/packsizes'<br>
+Payload:<br>
+{<br>
+    "packs": [23, 31, 53]<br>
+}<br>
+Response:<br>
+{<br>
+    "pid": 1,<br>
+    "packs": [ 23, 31, 53 ]<br>
+}<br>
+
+
+Setup the package sizes of a given product<br>
+GET 'http://localhost:8080/product/1/shipping-calculation?order=500000'<br>
+Response:<br>
+{<br>
+    "order": 500000,<br>
+    "packs": [<br>
+        {<br>
+            "packsize": 23,<br>
+            "quantity": 2<br>
+        },<br>
+        {<br>
+            "packsize": 31,<br>
+            "quantity": 7<br>
+        },<br>
+        {<br>
+            "packsize": 53,<br>
+            "quantity": 9429<br>
+        }<br>
+    ],<br>
+    "packscount": 9438,<br>
+    "total": 500000,<br>
+    "excess": 0<br>
+}<br>
 
 
 
