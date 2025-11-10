@@ -15,10 +15,11 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make build
 FROM alpine:latest
 
 WORKDIR /app
-COPY --from=builder /app/bin/ /bin/
+COPY --from=builder /app/bin/ /app/
+COPY --from=builder /app/web/ /app/web/
 
 EXPOSE 8080
 ENV SERVER_PORT=8080
-ENTRYPOINT ["/bin/shipping-optimizer"]
+ENTRYPOINT ["/app/shipping-optimizer"]
 
 

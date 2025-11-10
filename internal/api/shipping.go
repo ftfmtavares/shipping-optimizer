@@ -13,14 +13,14 @@ type ShippingOptimizer interface {
 }
 
 type PackResponse struct {
-	PackSize int `json:"packSize"`
+	PackSize int `json:"packsize"`
 	Quantity int `json:"quantity"`
 }
 
 type ShippingCalculationResponse struct {
 	Order      int            `json:"order"`
 	Packs      []PackResponse `json:"packs"`
-	PacksCount int            `json:"packsCount"`
+	PacksCount int            `json:"packscount"`
 	Total      int            `json:"total"`
 	Excess     int            `json:"excess"`
 }

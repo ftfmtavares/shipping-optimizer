@@ -32,6 +32,7 @@ func main() {
 	})
 
 	servicesRegistration(ctx, &server)
+	staticWeb(&server)
 	server.WithHealthCheck()
 
 	server.StartHTTPServerAsync()
@@ -42,9 +43,13 @@ func servicesRegistration(ctx context.Context, server *server.HTTPServer) {
 	rep := repositories.NewAPIRepositories()
 
 	shippingOptimizer := srvshipping.NewOptimizer(rep.PackSizes)
-	server.WithRoute("/product/{pid}/shipping-calculation", api.ShippingCalculation(ctx, shippingOptimizer), http.MethodOptions, http.MethodGet)
+	server.WithServiceHandler("/product/{pid}/shipping-calculation", api.ShippingCalculation(ctx, shippingOptimizer), http.MethodOptions, http.MethodGet)
 
 	productConfigurator := srvproduct.NewConfigurator(rep.PackSizes)
-	server.WithRoute("/product/{pid}/packsizes", api.ProductPackSizes(ctx, productConfigurator), http.MethodOptions, http.MethodGet)
-	server.WithRoute("/product/{pid}/packsizes", api.StoreProductPackSizes(ctx, productConfigurator), http.MethodOptions, http.MethodPost)
+	server.WithServiceHandler("/product/{pid}/packsizes", api.ProductPackSizes(ctx, productConfigurator), http.MethodOptions, http.MethodGet)
+	server.WithServiceHandler("/product/{pid}/packsizes", api.StoreProductPackSizes(ctx, productConfigurator), http.MethodOptions, http.MethodPost)
+}
+
+func staticWeb(server *server.HTTPServer) {
+	server.WithStatic("/", "web")
 }

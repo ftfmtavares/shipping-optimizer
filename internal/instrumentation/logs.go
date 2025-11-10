@@ -20,13 +20,13 @@ func NewLogger() Logger {
 }
 
 func (l Logger) Info(msg string) {
-	l.infoLog.Println(" " + msg)
+	l.infoLog.Println(msg)
 }
 
 func (l Logger) Warning(msg string) {
-	l.warningLog.Println(" " + msg)
+	l.warningLog.Println(msg)
 }
 
 func (l Logger) Error(msg string) {
-	l.errorLog.Println(" " + msg)
+	l.errorLog.Println(msg)
 }

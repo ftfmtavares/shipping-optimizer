@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product Packages</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+<div class="container py-5">
+  <h1 class="mb-4 text-center">Product Packages</h1>
+
+  <!-- Two-column layout -->
+  <div class="row g-4">
+    <!-- Left column: Package management -->
+    <div class="col-md-6">
+      <form id="productForm" class="mb-4">
+        <div class="mb-2">
+          <label for="productId" class="form-label fw-semibold">Product ID</label>
+        </div>
+        <div class="input-group">
+          <input type="number" id="productId" class="form-control" placeholder="Enter Product ID" required>
+          <button type="submit" class="btn btn-primary">Fetch Packages</button>
+        </div>
+      </form>
+
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">Available Packages</h5>
+          <table class="table table-striped mt-3" id="packageTable">
+            <thead>
+              <tr>
+                <th scope="col">#</th>
+                <th scope="col">Package Size</th>
+                <th scope="col">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="packageList"></tbody>
+          </table>
+          <div class="d-flex justify-content-between align-items-center">
+            <button id="addPackageBtn" class="btn btn-outline-secondary">Add Package</button>
+            <button id="saveAllBtn" class="btn btn-success" disabled>Save All</button>
+          </div>
+          <div id="feedback" class="mt-3"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right column: Order calculation -->
+    <div class="col-md-6">
+      <form id="calcForm" class="mb-4">
+        <div class="mb-2">
+          <label for="orderQty" class="form-label fw-semibold">Order Quantity</label>
+        </div>
+        <div class="input-group">
+          <input type="number" id="orderQty" class="form-control" placeholder="Enter order quantity" min="1" required>
+          <button type="submit" class="btn btn-primary" id="calcButton">Calculate</button>
+        </div>
+      </form>
+
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title mb-3">Pack Calculation</h5>
+
+          <!-- Summary fields -->
+          <div id="calcSummary" class="row text-center mb-3 d-none">
+            <div class="col">
+              <div class="fw-semibold">Total Items</div>
+              <div id="totalItems" class="text-primary fw-bold">0</div>
+            </div>
+            <div class="col">
+              <div class="fw-semibold">Excess Items</div>
+              <div id="excessItems" class="text-danger fw-bold">0</div>
+            </div>
+            <div class="col">
+              <div class="fw-semibold">Total Packages</div>
+              <div id="totalPackages" class="text-success fw-bold">0</div>
+            </div>
+          </div>
+
+          <!-- Results table -->
+          <div id="calcResultContainer">
+            <h6 class="mt-3">Calculation Result</h6>
+            <table class="table table-striped mt-2" id="calcResultTable">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Pack Size</th>
+                  <th>Quantity</th>
+                </tr>
+              </thead>
+              <tbody id="calcResultBody">
+                <tr><td colspan="3" class="text-muted text-center">No calculation yet</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div id="calcFeedback" class="mt-2"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const form = document.getElementById("productForm");
+  const packageList = document.getElementById("packageList");
+  const saveAllBtn = document.getElementById("saveAllBtn");
+  const addPackageBtn = document.getElementById("addPackageBtn");
+  const feedback = document.getElementById("feedback");
+  const calcForm = document.getElementById("calcForm");
+  const calcFeedback = document.getElementById("calcFeedback");
+  const calcResultBody = document.getElementById("calcResultBody");
+  const calcButton = document.getElementById("calcButton");
+
+  const calcSummary = document.getElementById("calcSummary");
+  const totalItemsEl = document.getElementById("totalItems");
+  const excessItemsEl = document.getElementById("excessItems");
+  const totalPackagesEl = document.getElementById("totalPackages");
+
+  let currentSizes = [];
+  let isEditing = false;
+
+  // --- Product Pack Management ---
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const productId = document.getElementById("productId").value;
+    if (!productId) return;
+    localStorage.setItem("lastProductId", productId);
+
+    currentSizes = [];
+    renderTable();
+    clearCalculation();
+    feedback.innerHTML = "";
+    calcFeedback.innerHTML = "";
+    saveAllBtn.disabled = true;
+
+    packageList.innerHTML = "<tr><td colspan='3'>Loading...</td></tr>";
+
+    try {
+      const response = await fetch(`/product/${productId}/packsizes`);
+      const sizes = await response.json();
+
+      if (!sizes.packs || sizes.packs.length === 0) {
+        packageList.innerHTML = "<tr><td colspan='3'>No packages found.</td></tr>";
+        saveAllBtn.disabled = false;
+        return;
+      }
+
+      currentSizes = sizes.packs;
+      renderTable();
+      saveAllBtn.disabled = false;
+    } catch {
+      currentSizes = [];
+      packageList.innerHTML = "<tr><td colspan='3' class='text-danger'>Product Not Found</td></tr>";
+      clearCalculation();
+      saveAllBtn.disabled = false;
+    }
+  });
+
+  function renderTable() {
+    packageList.innerHTML = currentSizes.length
+      ? currentSizes.map((s, i) => `
+        <tr>
+          <td>${i + 1}</td>
+          <td>
+            <span class="size-text">${s}</span>
+            <input type="number" class="form-control form-control-sm size-input d-none" value="${s}">
+          </td>
+          <td>
+            <button class="btn btn-sm btn-outline-primary edit-btn">Edit</button>
+            <button class="btn btn-sm btn-success save-btn d-none">Save</button>
+            <button class="btn btn-sm btn-secondary cancel-btn d-none">Cancel</button>
+            <button class="btn btn-sm btn-outline-danger remove-btn">Remove</button>
+          </td>
+        </tr>`).join("")
+      : "<tr><td colspan='3'>No packages found.</td></tr>";
+
+    document.querySelectorAll(".edit-btn").forEach((btn, i) => btn.onclick = () => startEdit(i));
+    document.querySelectorAll(".save-btn").forEach((btn, i) => btn.onclick = () => saveEdit(i));
+    document.querySelectorAll(".cancel-btn").forEach((btn, i) => btn.onclick = cancelEdit);
+    document.querySelectorAll(".remove-btn").forEach((btn, i) => btn.onclick = () => removePackage(i));
+    updateSaveAllButtonState();
+  }
+
+  function startEdit(i) {
+    if (isEditing) return showFeedback("Finish the current edit first.", "warning");
+    isEditing = true; updateSaveAllButtonState();
+    const r = packageList.children[i];
+    r.querySelector(".size-text").classList.add("d-none");
+    r.querySelector(".size-input").classList.remove("d-none");
+    r.querySelector(".edit-btn").classList.add("d-none");
+    r.querySelector(".save-btn").classList.remove("d-none");
+    r.querySelector(".cancel-btn").classList.remove("d-none");
+  }
+
+  function saveEdit(i) {
+    const r = packageList.children[i];
+    const v = parseInt(r.querySelector(".size-input").value, 10);
+    if (isNaN(v) || v <= 0) return showFeedback("Invalid size value.", "danger");
+    currentSizes[i] = v;
+    isEditing = false; renderTable();
+  }
+
+  function cancelEdit() { isEditing = false; renderTable(); }
+
+  function removePackage(i) {
+    if (isEditing) return showFeedback("Finish editing before removing.", "warning");
+    if (confirm("Are you sure you want to remove this package size?")) {
+      currentSizes.splice(i, 1); renderTable();
+    }
+  }
+
+  addPackageBtn.onclick = () => {
+    if (isEditing) return showFeedback("Finish the current edit first.", "warning");
+    currentSizes.push(0); renderTable(); startEdit(currentSizes.length - 1);
+  };
+
+  saveAllBtn.onclick = async () => {
+    const productId = document.getElementById("productId").value;
+    const body = JSON.stringify({ packs: currentSizes });
+    try {
+      const r = await fetch(`/product/${productId}/packsizes`, {
+        method: "POST", headers: { "Content-Type": "application/json" }, body
+      });
+      if (!r.ok) throw new Error();
+      showFeedback("✅ Package sizes updated successfully!", "success");
+    } catch { showFeedback("❌ Error updating package sizes", "danger"); }
+  };
+
+  function updateSaveAllButtonState() {
+    saveAllBtn.disabled = isEditing || currentSizes.length === 0;
+  }
+
+  function showFeedback(msg, type = "success") {
+    feedback.innerHTML = `<div class="alert alert-${type} alert-dismissible fade show" role="alert">${msg}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>`;
+    setTimeout(() => feedback.querySelector('.alert')?.classList.remove('show'), 3000);
+  }
+
+  function clearCalculation() {
+    calcResultBody.innerHTML = "<tr><td colspan='3' class='text-muted text-center'>No calculation yet</td></tr>";
+    calcSummary.classList.add("d-none");
+    totalItemsEl.textContent = excessItemsEl.textContent = totalPackagesEl.textContent = "0";
+  }
+
+  // --- Pack Calculation ---
+  calcForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const pid = document.getElementById("productId").value;
+    const qty = parseInt(document.getElementById("orderQty").value, 10);
+    if (!pid || isNaN(qty) || qty <= 0)
+      return showCalcFeedback("⚠️ Enter a valid product ID and quantity.", "warning");
+
+    calcResultBody.innerHTML = "<tr><td colspan='3'>Calculating...</td></tr>";
+    calcButton.disabled = true;
+    const original = calcButton.textContent;
+    calcButton.textContent = "Calculating...";
+
+    try {
+      const r = await fetch(`/product/${pid}/shipping-calculation?order=${qty}`);
+      const data = await r.json();
+      if (!r.ok || !data) throw new Error();
+
+      totalItemsEl.textContent = data.total ?? 0;
+      excessItemsEl.textContent = data.excess ?? 0;
+      totalPackagesEl.textContent = data.packscount ?? 0;
+      calcSummary.classList.remove("d-none");
+
+      const rows = data.packs?.length
+        ? data.packs.map((p, i) => `<tr><td>${i + 1}</td><td>${p.packsize}</td><td>${p.quantity}</td></tr>`).join("")
+        : "<tr><td colspan='3'>No result</td></tr>";
+      calcResultBody.innerHTML = rows;
+      showCalcFeedback("✅ Calculation completed successfully.", "success");
+    } catch {
+      calcResultBody.innerHTML = "<tr><td colspan='3' class='text-danger'>Error performing calculation</td></tr>";
+      calcSummary.classList.add("d-none");
+      showCalcFeedback("❌ Failed to perform calculation.", "danger");
+    } finally {
+      calcButton.disabled = false;
+      calcButton.textContent = original;
+    }
+  });
+
+  function showCalcFeedback(msg, type = "success") {
+    calcFeedback.innerHTML = `<div class="alert alert-${type} alert-dismissible fade show" role="alert">${msg}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>`;
+    setTimeout(() => calcFeedback.querySelector('.alert')?.classList.remove('show'), 3000);
+  }
+</script>
+</body>
+</html>

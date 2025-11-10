@@ -62,12 +62,16 @@ func (s *HTTPServer) WithHealthCheck() {
 	s.router.HandleFunc("/health", healthHandler).Methods("GET")
 }
 
-func (s *HTTPServer) WithRoute(path string, handler http.HandlerFunc, methods ...string) {
+func (s *HTTPServer) WithServiceHandler(path string, handler http.HandlerFunc, methods ...string) {
 	handler = s.wrapPanicRecovery(handler)
 	handler = s.wrapJsonContentType(handler)
 	handler = s.wrapLogging(handler)
 
 	s.router.HandleFunc(path, handler).Methods(methods...)
+}
+
+func (s *HTTPServer) WithStatic(urlPath, assetPath string) {
+	s.router.PathPrefix(urlPath).Handler(http.FileServer(http.Dir(assetPath)))
 }
 
 func (s *HTTPServer) StartHTTPServerAsync() {
