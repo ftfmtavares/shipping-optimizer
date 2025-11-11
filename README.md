@@ -1,75 +1,144 @@
 # shipping-optimizer
-An exercise implementation of shipping packages optimizer based on different packing sizes and ordered amount
+An exercise implementation of shipping packages optimizer based on different packing sizes and ordered amount.  
+<br>
+The application is running online on Render:  
+https://shipping-optimizer-latest.onrender.com/  
+<br>
 
+---
 
+## Quick Start
+  
+#### Prerequisites
+- Go 1.25+  
+(or)  
+- Docker
+<br><br>
 
-## Makefile Commands
-make run:          # Run Locally<br>
-make test:         # Unit Tests<br>
-make build:        # Production Build<br>
-make vet:          # Code Quality Checks<br>
-make docker-build: # Generate Docker Image (requires Docker)<br>
-make docker-up:    # Run locally in a Docker Container (requires Docker)<br>
-make docker-down:  # End Docker Container Execution (requires Docker)<br>
+#### Clone Project
+```sh
+git clone -v https://github.com/ftfmtavares/shipping-optimizer
+cd shipping-optimizer
+```
+<br>
 
+#### Run
+```sh
+make run
+```
+<br>
 
+#### Build
+```sh
+make build
+# result: ./bin/shipping-optimizer
+```
+<br>
+The aplication requires environment variables to be set before running the binary:  
+- SERVER_ADDRESS (e.g. localhost)
+- SERVER_PORT (e.g. 8080)
+<br>
 
-## API Endpoints Examples
-Retrieve the package sizes of a given product<br>
-GET 'http://localhost:8080/product/1/packsizes'<br>
-Response:<br>
-{<br>
-    "pid": 1,<br>
-    "packs": [ 23, 31, 53 ]<br>
-}<br>
+#### Run tests and coverage
+```sh
+make test
+```
+<br>
 
+#### Build Docker Image:
+```sh
+make docker-build
+```
+<br>
 
-Setup the package sizes of a given product<br>
-POST 'http://localhost:8080/product/1/packsizes'<br>
-Payload:<br>
-{<br>
-    "packs": [23, 31, 53]<br>
-}<br>
-Response:<br>
-{<br>
-    "pid": 1,<br>
-    "packs": [ 23, 31, 53 ]<br>
-}<br>
+#### Run Docker Container:
+```sh
+make docker-up
+```
+<br>
 
+#### Stop Docker Image:
+```sh
+make docker-down
+```
+<br>
 
-Setup the package sizes of a given product<br>
-GET 'http://localhost:8080/product/1/shipping-calculation?order=500000'<br>
-Response:<br>
-{<br>
-    "order": 500000,<br>
-    "packs": [<br>
-        {<br>
-            "packsize": 23,<br>
-            "quantity": 2<br>
-        },<br>
-        {<br>
-            "packsize": 31,<br>
-            "quantity": 7<br>
-        },<br>
-        {<br>
-            "packsize": 53,<br>
-            "quantity": 9429<br>
-        }<br>
-    ],<br>
-    "packscount": 9438,<br>
-    "total": 500000,<br>
-    "excess": 0<br>
-}<br>
+---
 
-
-
-## UI Demonstration Page
-http://localhost:8080/
-
+## API
+A minimal demonstration UI is served at root:
+http://localhost:8080/  
+<br>
 ![alt text](misc/image.png)
+<br><br>
 
+#### Product Packages Size Configuration Set
+- POST /product/{pid}/packsizes  
+  Command:
+```sh
+curl -X POST -H "Content-Type: application/json" \
+  -d '{"packs":[23,31,53]}' \
+  http://localhost:8080/product/1/packsizes
+```
+  Response example:  
+```json
+{
+    "pid": 1,
+    "packs": [ 23, 31, 53 ]
+}
+```
+<br>
 
+#### Product Packages Size Configuration Read
+- GET /product/{pid}/packsizes  
+  Command:
+```sh
+curl -s http://localhost:8080/product/1/packsizes
+```
+  Response example:  
+```json
+{
+    "pid": 1,
+    "packs": [ 23, 31, 53 ]
+}
+```
+<br>
 
-## Live Demo
-The application is running online on Render:<br>
-https://shipping-optimizer-latest.onrender.com/<br>
+#### Order Shipping Calculation
+- GET /product/{pid}/shipping-calculation?order={qty}  
+  Command:
+```sh
+curl -s "http://localhost:8080/product/1/shipping-calculation?order=500000"
+```
+  Response example:  
+```json
+{
+    "order": 500000,
+    "packs": [
+        {
+            "packsize": 23,
+            "quantity": 2
+        },
+        {
+            "packsize": 31,
+            "quantity": 7
+        },
+        {
+            "packsize": 53,
+            "quantity": 9429
+        }
+    ],
+    "packscount": 9438,
+    "total": 500000,
+    "excess": 0
+}
+```
+<br>
+
+#### Validation rules and limits
+- pid = valid and non negative integer
+- qty = valid and non negative integer (max 10B units)
+- package size = non negative integer
+<br><br>
+
+---

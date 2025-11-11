@@ -3,7 +3,7 @@ SERVER_PORT ?= 8080
 APP_NAME = shipping-optimizer
 DOCKER_TAG = shipping-optimizer:latest
 
-.PHONY: build run test docker-build docker-up fmt vet lint
+.PHONY: build run test docker-build docker-up docker-down fmt vet
 
 build:
 	go build -o ./bin/$(APP_NAME) ./cmd/api
