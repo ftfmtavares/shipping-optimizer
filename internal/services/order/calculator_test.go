@@ -1,25 +1,28 @@
-package shipping
+package order
 
 import (
 	"context"
+	"errors"
 	"testing"
 
-	"github.com/ftfmtavares/shipping-optimizer/internal/domain/shipping"
+	"github.com/ftfmtavares/shipping-optimizer/internal/domain/order"
 	"github.com/stretchr/testify/assert"
 )
 
 type mockStorage struct{}
 
-func (m mockStorage) PackSizes(pid int) []int {
+func (m mockStorage) PackSizes(pid int) ([]int, error) {
 	switch pid {
+	case 0:
+		return []int{}, nil
 	case 1:
-		return []int{5, 10, 12}
+		return []int{5, 10, 12}, nil
 	case 2:
-		return []int{23, 31, 53}
+		return []int{23, 31, 53}, nil
 	case 3:
-		return []int{23, 31, 53, 79, 97, 113, 137}
+		return []int{23, 31, 53, 79, 97, 113, 137}, nil
 	}
-	return []int{}
+	return nil, errors.New("error")
 }
 
 func TestShippingCalculateShipping(t *testing.T) {
@@ -28,41 +31,51 @@ func TestShippingCalculateShipping(t *testing.T) {
 	testCases := []struct {
 		desc          string
 		pid           int
-		order         shipping.Order
-		expected      shipping.Shipping
+		order         order.Order
+		expected      order.Shipping
 		expectedError assert.ErrorAssertionFunc
 	}{
 		{
 			desc: "no order",
 			pid:  1,
-			order: shipping.Order{
+			order: order.Order{
 				PID: 1,
 				Qty: 0,
 			},
-			expected:      shipping.Shipping{},
+			expected:      order.Shipping{},
+			expectedError: assert.Error,
+		},
+		{
+			desc: "product not found",
+			pid:  -1,
+			order: order.Order{
+				PID: -1,
+				Qty: 21,
+			},
+			expected:      order.Shipping{},
 			expectedError: assert.Error,
 		},
 		{
 			desc: "no pack sizes defined",
 			pid:  0,
-			order: shipping.Order{
+			order: order.Order{
 				PID: 0,
 				Qty: 21,
 			},
-			expected:      shipping.Shipping{},
+			expected:      order.Shipping{},
 			expectedError: assert.Error,
 		},
 		{
 			desc: "simple case",
 			pid:  1,
-			order: shipping.Order{
+			order: order.Order{
 				PID: 1,
 				Qty: 21,
 			},
-			expected: shipping.Shipping{
+			expected: order.Shipping{
 				PID:   1,
 				Order: 21,
-				Packs: []shipping.Pack{
+				Packs: []order.Pack{
 					{
 						PackSize: 10,
 						Quantity: 1,
@@ -81,14 +94,14 @@ func TestShippingCalculateShipping(t *testing.T) {
 		{
 			desc: "target case",
 			pid:  2,
-			order: shipping.Order{
+			order: order.Order{
 				PID: 2,
 				Qty: 500000,
 			},
-			expected: shipping.Shipping{
+			expected: order.Shipping{
 				PID:   2,
 				Order: 500000,
-				Packs: []shipping.Pack{
+				Packs: []order.Pack{
 					{
 						PackSize: 23,
 						Quantity: 2,
@@ -111,14 +124,14 @@ func TestShippingCalculateShipping(t *testing.T) {
 		{
 			desc: "load case",
 			pid:  3,
-			order: shipping.Order{
+			order: order.Order{
 				PID: 3,
 				Qty: 100000000,
 			},
-			expected: shipping.Shipping{
+			expected: order.Shipping{
 				PID:   3,
 				Order: 100000000,
-				Packs: []shipping.Pack{
+				Packs: []order.Pack{
 					{
 						PackSize: 97,
 						Quantity: 1,

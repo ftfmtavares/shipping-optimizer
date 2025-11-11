@@ -66,4 +66,10 @@ Response:<br>
 ## UI Demonstration Page
 http://localhost:8080/
 
-![alt text](image.png)
+![alt text](misc/image.png)
+
+
+
+## Live Demo
+The application is running online on Render:<br>
+https://shipping-optimizer-latest.onrender.com/<br>

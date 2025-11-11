@@ -1,3 +1,4 @@
+// Package config handles all configurations
 package config
 
 import (
@@ -11,18 +12,19 @@ const (
 	ServerPortKey    = "SERVER_PORT"
 )
 
+// Config holds all configuration parameters
 type Config struct {
-	Env           string
 	ServerAddress string
 	ServerPort    int
 }
 
-func NewConfig() Config {
+// InitConfig initializes the configurations parameters from all sources
+func InitConfig() Config {
 	serverAddress := os.Getenv(ServerAddressKey)
 
 	port, err := strconv.Atoi(os.Getenv(ServerPortKey))
 	if err != nil {
-		log.Fatalf("[ENV] Invalid server port: %v", err)
+		log.Panicf("[ENV] Invalid server port: %v", err)
 	}
 
 	return Config{

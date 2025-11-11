@@ -1,3 +1,4 @@
+// Package server handles the web server
 package server
 
 import (
@@ -15,13 +16,14 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// HTTPServer holds the web server
 type HTTPServer struct {
 	server *http.Server
 	router *mux.Router
 	logger instrumentation.Logger
-	env    string
 }
 
+// HTTPServerConfig wraps all required configuration to initialize a new HTTPServer
 type HTTPServerConfig struct {
 	Address      string
 	Port         int
@@ -29,9 +31,9 @@ type HTTPServerConfig struct {
 	WriteTimeout time.Duration
 	IdleTimeout  time.Duration
 	Logger       instrumentation.Logger
-	Env          string
 }
 
+// NewHTTPServer returns an initialized HTTPServer
 func NewHTTPServer(sc HTTPServerConfig) HTTPServer {
 	router := mux.NewRouter()
 	return HTTPServer{
@@ -44,10 +46,10 @@ func NewHTTPServer(sc HTTPServerConfig) HTTPServer {
 		},
 		router: router,
 		logger: sc.Logger,
-		env:    sc.Env,
 	}
 }
 
+// WithHealthCheck method adds a predefined route and response for health requests
 func (s *HTTPServer) WithHealthCheck() {
 	healthHandler := func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -62,6 +64,7 @@ func (s *HTTPServer) WithHealthCheck() {
 	s.router.HandleFunc("/health", healthHandler).Methods("GET")
 }
 
+// WithServiceHandler method adds a given route to a response handler
 func (s *HTTPServer) WithServiceHandler(path string, handler http.HandlerFunc, methods ...string) {
 	handler = s.wrapPanicRecovery(handler)
 	handler = s.wrapJsonContentType(handler)
@@ -70,10 +73,12 @@ func (s *HTTPServer) WithServiceHandler(path string, handler http.HandlerFunc, m
 	s.router.HandleFunc(path, handler).Methods(methods...)
 }
 
+// WithStatic method adds a given route to a folder with static web contents
 func (s *HTTPServer) WithStatic(urlPath, assetPath string) {
 	s.router.PathPrefix(urlPath).Handler(http.FileServer(http.Dir(assetPath)))
 }
 
+// StartHTTPServerAsync method starts the web server asynchronously
 func (s *HTTPServer) StartHTTPServerAsync() {
 	s.logger.Info("starting api on " + s.server.Addr)
 
@@ -85,6 +90,7 @@ func (s *HTTPServer) StartHTTPServerAsync() {
 	}()
 }
 
+// WithShutdownGracefully method stops the server when the aplication terminates
 func (s *HTTPServer) WithShutdownGracefully() {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)

@@ -1,3 +1,4 @@
+// Package api handles the api requests and definitions
 package api
 
 import (
@@ -8,16 +9,19 @@ import (
 	"github.com/ftfmtavares/shipping-optimizer/internal/domain/product"
 )
 
+// Product provides the product package sizes management service
 type Product interface {
 	PackSizes(context.Context, int) (product.Product, error)
-	Update(context.Context, int, []int) (product.Product, error)
+	Update(context.Context, int, []int)
 }
 
+// ProductPackSizesResponse holds the product package sizes response
 type ProductPackSizesResponse struct {
 	PID   int   `json:"pid"`
 	Packs []int `json:"packs"`
 }
 
+// ProductPackSizes handles the product packages sizes retrieval requests
 func ProductPackSizes(ctx context.Context, retriever Product) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		productID, valid := validatePidVar(w, r)
@@ -41,10 +45,12 @@ func ProductPackSizes(ctx context.Context, retriever Product) http.HandlerFunc {
 	}
 }
 
+// ProductPackSizesRequest holds the product package sizes update request
 type ProductPackSizesRequest struct {
 	Packs []int `json:"packs"`
 }
 
+// StoreProductPackSizes handles the product packages sizes update requests
 func StoreProductPackSizes(ctx context.Context, updater Product) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		productID, valid := validatePidVar(w, r)
@@ -57,15 +63,11 @@ func StoreProductPackSizes(ctx context.Context, updater Product) http.HandlerFun
 			return
 		}
 
-		prd, err := updater.Update(ctx, productID, packSizes)
-		if err != nil {
-			http.Error(w, "internal error", http.StatusInternalServerError)
-			return
-		}
+		updater.Update(ctx, productID, packSizes)
 
-		err = json.NewEncoder(w).Encode(ProductPackSizesResponse{
+		err := json.NewEncoder(w).Encode(ProductPackSizesResponse{
 			PID:   productID,
-			Packs: prd.Packs,
+			Packs: packSizes,
 		})
 		if err != nil {
 			http.Error(w, "internal error", http.StatusInternalServerError)

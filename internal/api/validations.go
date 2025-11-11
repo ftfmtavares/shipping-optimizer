@@ -1,3 +1,4 @@
+// Package api handles the api requests and definitions
 package api
 
 import (
@@ -30,7 +31,7 @@ func validateOrderQuery(w http.ResponseWriter, r *http.Request) (int, bool) {
 	}
 
 	convertedOrder, err := strconv.Atoi(orders[0])
-	if err != nil || convertedOrder < 0 {
+	if err != nil || convertedOrder <= 0 {
 		http.Error(w, "order query parameter not valid", http.StatusBadRequest)
 		return 0, false
 	}

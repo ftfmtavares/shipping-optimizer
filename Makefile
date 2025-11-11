@@ -13,7 +13,8 @@ run:
 	SERVER_ADDRESS=$(SERVER_ADDRESS) SERVER_PORT=$(SERVER_PORT) go run ./cmd/api
 
 test:
-	go test ./... -v
+	go test -failfast -coverprofile=test.cover ./internal/... -v
+	go tool cover -func=test.cover
 
 fmt:
 	go fmt ./...

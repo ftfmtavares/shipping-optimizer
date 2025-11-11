@@ -1,3 +1,4 @@
 .vscode/launch.json
 info/
 bin/
+test.cover

@@ -1,3 +1,4 @@
+// Package main for shipping optimizer API
 package main
 
 import (
@@ -12,15 +13,15 @@ import (
 	"github.com/ftfmtavares/shipping-optimizer/internal/instrumentation"
 	"github.com/ftfmtavares/shipping-optimizer/internal/repositories"
 	"github.com/ftfmtavares/shipping-optimizer/internal/server"
-	srvproduct "github.com/ftfmtavares/shipping-optimizer/internal/services/product"
-	srvshipping "github.com/ftfmtavares/shipping-optimizer/internal/services/shipping"
+	"github.com/ftfmtavares/shipping-optimizer/internal/services/order"
+	"github.com/ftfmtavares/shipping-optimizer/internal/services/product"
 )
 
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	cfg := config.NewConfig()
+	cfg := config.InitConfig()
 	server := server.NewHTTPServer(server.HTTPServerConfig{
 		Address:      cfg.ServerAddress,
 		Port:         cfg.ServerPort,
@@ -28,7 +29,6 @@ func main() {
 		WriteTimeout: time.Second * 30,
 		IdleTimeout:  time.Second * 30,
 		Logger:       instrumentation.NewLogger(),
-		Env:          cfg.Env,
 	})
 
 	servicesRegistration(ctx, &server)
@@ -42,10 +42,10 @@ func main() {
 func servicesRegistration(ctx context.Context, server *server.HTTPServer) {
 	rep := repositories.NewAPIRepositories()
 
-	shippingOptimizer := srvshipping.NewOptimizer(rep.PackSizes)
-	server.WithServiceHandler("/product/{pid}/shipping-calculation", api.ShippingCalculation(ctx, shippingOptimizer), http.MethodOptions, http.MethodGet)
+	shippingOptimizer := order.NewOptimizer(rep.PackSizes)
+	server.WithServiceHandler("/product/{pid}/shipping-calculation", api.OrderCalculation(ctx, shippingOptimizer), http.MethodOptions, http.MethodGet)
 
-	productConfigurator := srvproduct.NewConfigurator(rep.PackSizes)
+	productConfigurator := product.NewConfigurator(rep.PackSizes)
 	server.WithServiceHandler("/product/{pid}/packsizes", api.ProductPackSizes(ctx, productConfigurator), http.MethodOptions, http.MethodGet)
 	server.WithServiceHandler("/product/{pid}/packsizes", api.StoreProductPackSizes(ctx, productConfigurator), http.MethodOptions, http.MethodPost)
 }

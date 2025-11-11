@@ -1,3 +1,4 @@
+// Package api handles the api requests and definitions
 package api
 
 import (
@@ -5,18 +6,21 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/ftfmtavares/shipping-optimizer/internal/domain/shipping"
+	"github.com/ftfmtavares/shipping-optimizer/internal/domain/order"
 )
 
+// ShippingOptimizer provides the order packages calculation service
 type ShippingOptimizer interface {
-	Calculate(context.Context, shipping.Order) (shipping.Shipping, error)
+	Calculate(context.Context, order.Order) (order.Shipping, error)
 }
 
+// PackResponse holds information of a package size quantity
 type PackResponse struct {
 	PackSize int `json:"packsize"`
 	Quantity int `json:"quantity"`
 }
 
+// ShippingCalculationResponse holds the orders calculation response
 type ShippingCalculationResponse struct {
 	Order      int            `json:"order"`
 	Packs      []PackResponse `json:"packs"`
@@ -25,21 +29,22 @@ type ShippingCalculationResponse struct {
 	Excess     int            `json:"excess"`
 }
 
-func ShippingCalculation(ctx context.Context, calculator ShippingOptimizer) http.HandlerFunc {
+// OrderCalculation handles the orders calculation requests
+func OrderCalculation(ctx context.Context, calculator ShippingOptimizer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		productID, valid := validatePidVar(w, r)
 		if !valid {
 			return
 		}
 
-		order, valid := validateOrderQuery(w, r)
+		orderQty, valid := validateOrderQuery(w, r)
 		if !valid {
 			return
 		}
 
-		sd, err := calculator.Calculate(ctx, shipping.Order{
+		sd, err := calculator.Calculate(ctx, order.Order{
 			PID: productID,
-			Qty: order,
+			Qty: orderQty,
 		})
 		if err != nil {
 			http.Error(w, "internal error", http.StatusInternalServerError)
