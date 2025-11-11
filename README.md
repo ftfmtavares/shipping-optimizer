@@ -34,7 +34,7 @@ make build
 # result: ./bin/shipping-optimizer
 ```
 <br>
-The aplication requires environment variables to be set before running the binary:  
+The application requires environment variables to be set before running the binary:  
 - SERVER_ADDRESS (e.g. localhost)
 - SERVER_PORT (e.g. 8080)
 <br>
